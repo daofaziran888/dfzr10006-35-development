@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { request } from '@/api/client'
+import RollbackPreview from './preview'
 
 const ENDPOINT = '/api/rollback'
 const columns = [
@@ -24,20 +25,6 @@ const statuses = [
   "已回退",
   "已清理"
 ]
-const stats = [
-  {
-    "label": "版本快照总数",
-    "value": 0
-  },
-  {
-    "label": "已创建快照",
-    "value": 0
-  },
-  {
-    "label": "已回退快照",
-    "value": 0
-  }
-]
 
 type Row = Record<string, string | number | null>
 
@@ -47,6 +34,15 @@ export default function RollbackView() {
   const [errorMessage, setErrorMessage] = useState('')
   const [filters, setFilters] = useState<Record<string, string>>({})
   const filterFields = useMemo(() => columns.slice(0, 3), [])
+
+  const statItems = useMemo(() => {
+    const countByStatus = (status: string) => rows.filter((row) => row.status === status).length
+    return [
+      { label: '版本快照总数', value: total },
+      { label: '已创建快照', value: countByStatus('已创建') },
+      { label: '已回退快照', value: countByStatus('已回退') },
+    ]
+  }, [rows, total])
 
   const reload = useCallback(async () => {
     setErrorMessage('')
@@ -101,8 +97,10 @@ export default function RollbackView() {
         </div>
       </header>
 
+      <RollbackPreview />
+
       <div className="stat-row">
-        {stats.map((item) => (
+        {statItems.map((item) => (
           <article key={item.label} className="stat-card">
             <span className="stat-label">{item.label}</span>
             <strong className="stat-value">{item.value}</strong>

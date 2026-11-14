@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.routers import ROUTERS
+from app.services.rollback import rollback_service
 from app.store import store
 
 app = FastAPI(title="实时数据服务总线平台", version="1.0.0")
@@ -34,5 +35,11 @@ def health() -> dict[str, object]:
 
 @app.get("/api/overview")
 def overview() -> dict[str, object]:
-    """运营概览：把各业务模块的待处理量汇总成看板卡片。"""
-    return store.overview()
+    """运营概览：把各业务模块的待处理量汇总成看板卡片。
+
+    额外带上服务版本回退的版本恢复结果，方便和 ROLL-0002 的配置项、
+    ROLL-0003 的版本号逐项核对当前实例版本是否已经恢复。
+    """
+    payload = store.overview()
+    payload["versionRecovery"] = rollback_service.version_recovery_overview()
+    return payload
